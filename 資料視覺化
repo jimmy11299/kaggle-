@@ -1,0 +1,432 @@
+#shinydashboard
+library(shinydashboard)
+library(shinythemes)
+library(shiny)
+library(ggplot2)
+library(png)
+library(data.table)
+library(h2o)
+library(randomForest)
+library(DT)
+library(plotly)
+ui<-dashboardPage(
+  dashboardHeader(title="kaggle氣象資料分析"),
+  #第一頁 
+  dashboardSidebar( # 側邊欄位
+    sidebarMenu( # 選單
+      menuItem("氣象資料", tabName = "id_1", 
+               icon = icon("dashboard")),# 選項1
+      menuItem("變數選擇", icon = icon("bar-chart-o"), startExpanded = TRUE,#將模型選項縮排
+               menuSubItem("meantemp變數分析", tabName = "id_2", 
+                           icon = icon("thumbs-up")),# 選項2
+               menuSubItem("humidity變數分析", tabName = "id_3", 
+                           icon = icon("thumbs-down")),# 選項3
+               menuSubItem("wind_speed變數分析", tabName = "id_4", 
+                           icon = icon("github-alt")),# 選項5
+               menuSubItem("meanpressure變數分析", tabName = "id_5", 
+                           icon = icon("github-alt")))# 選項5
+    )
+  ),
+  dashboardBody(
+    #第二頁
+    tabItems( 
+      tabItem(tabName = "id_1", # 對應選項1
+              fluidPage(
+                box(width = 9,
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    column(6,
+                           plotlyOutput("meantemp_0",
+                                        width = "100%",
+                                        height = "350px"),
+                           plotlyOutput("humidity_0",
+                                        width = "100%",
+                                        height = "350px")),
+                    column(6,
+                           plotlyOutput("wind_speed_0",
+                                        width = "100%",
+                                        height = "350px"),
+                           plotlyOutput("meanpressure_0",
+                                        width = "100%",
+                                        height = "350px"))),
+                box(width = 3,
+                    titlePanel(tags$b("選擇變數類別與年分 :")),
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    selectInput("choice1", "meantemp資料年份選擇 :", c("2013年~2016年","2013年", "2014年","2015年","2016年")),
+                    selectInput("choice2", "humidity資料年份選擇 :", c("2013年~2016年","2013年", "2014年","2015年","2016年")),
+                    selectInput("choice3", "wind_speed資料年份選擇 :", c("2013年~2016年","2013年", "2014年","2015年","2016年")),
+                    selectInput("choice4", "meanpressure資料年份選擇 :", c("2013年~2016年","2013年", "2014年","2015年","2016年"))),
+                box(width = 3,
+                    titlePanel(tags$b("資料說明 :")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    h4("此資料集來自kaggle平台，"),
+                    h4("運用時間序列分析方法，"),
+                    h4("對kaggle天氣資料進行分析，"),
+                    h4("針對每個變數分別進行單根檢定，"),
+                    h4("並建立ARIMA模型，"),
+                    h4("再根據模型殘差進行白噪音檢驗，"),
+                    h4("最後透過模型進行預測。"))
+              ),
+      ),
+      tabItem(tabName = "id_2",
+              fluidPage(
+                box(width = 6,
+                    titlePanel(tags$b("meantemp時間序列圖")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    plotlyOutput("meantemp_1",
+                                 width = "100%",
+                                 height = "200px")),
+                box(width = 6,
+                    titlePanel(tags$b("meantemp時間序列預測圖")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    plotlyOutput("for1",
+                                 width = "100%",
+                                 height = "200px"))
+              ),
+              fluidPage(
+                box(width = 6,
+                    height = 600,
+                    titlePanel(tags$b("白噪音檢定")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    plotOutput("df1")),
+                box(width = 6,
+                    titlePanel(tags$b("meantemp全年度資料表")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    dataTableOutput("all_meantemp"),
+                    downloadButton("download_meantemp", "Download .csv"))
+                )
+      ),
+      tabItem(tabName = "id_3",
+              fluidPage(
+                box(width = 6,
+                    titlePanel(tags$b("humidity時間序列圖")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    plotlyOutput("humidity_1",
+                                 width = "100%",
+                                 height = "200px")),
+                box(width = 6,
+                    titlePanel(tags$b("humidity時間序列預測圖")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    plotlyOutput("for2",
+                                 width = "100%",
+                                 height = "200px"))
+              ),
+              fluidPage(
+                box(width = 6,
+                    height = 600,
+                    titlePanel(tags$b("白噪音檢定")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    plotOutput("df2")),
+                box(width = 6,
+                    titlePanel(tags$b("humidity全年度資料表")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    dataTableOutput("all_humidity"),
+                    downloadButton("download_humidity", "Download .csv"))
+              )
+              ),
+      tabItem(tabName = "id_4",
+              fluidPage(
+                box(width = 6,
+                    titlePanel(tags$b("wind_speed時間序列圖")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    plotlyOutput("wind_speed_1",
+                                 width = "100%",
+                                 height = "200px")),
+                box(width = 6,
+                    titlePanel(tags$b("wind_speed時間序列預測圖")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    plotlyOutput("for3",
+                                 width = "100%",
+                                 height = "200px"))
+              ),
+              fluidPage(
+                box(width = 6,
+                    height = 600,
+                    titlePanel(tags$b("白噪音檢定")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    plotOutput("df3")),
+                box(width = 6,
+                    titlePanel(tags$b("wind_speed全年度資料表")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    dataTableOutput("all_wind_speed"),
+                    downloadButton("download_wind_speed", "Download .csv"))
+              )),
+      tabItem(tabName = "id_5",
+              fluidPage(
+                box(width = 6,
+                    titlePanel(tags$b("meanpressure時間序列圖")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    plotlyOutput("meanpressure_1",
+                                 width = "100%",
+                                 height = "200px")),
+                box(width = 6,
+                    titlePanel(tags$b("meanpressure時間序列預測圖")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    plotlyOutput("for4",
+                                 width = "100%",
+                                 height = "200px"))
+              ),
+              fluidPage(
+                box(width = 6,
+                    height = 600,
+                    titlePanel(tags$b("白噪音檢定")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    plotOutput("df4")),
+                box(width = 6,
+                    titlePanel(tags$b("meanpressure全年度資料表")),
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    dataTableOutput("all_meanpressure"),
+                    downloadButton("download_meanpressure", "Download .csv"))
+              )
+      )
+    )
+  )
+)
+
+server<-function(input,output){
+  #第一頁
+  output$meantemp_0 <- renderPlotly({
+    if (input$choice1 == "2013年~2016年") {
+      ggplotly(ggplot(weather,aes(x = meantemp))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meantemp", y="count",caption="資料來源 : kaggle平台",
+                      title="2013年~2016年meantemp資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice1 == "2013年"){
+      ggplotly(ggplot(a_2013,aes(x = meantemp))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meantemp", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年meantemp資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice1 == "2014年"){
+      ggplotly(ggplot(a_2014,aes(x = meantemp))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meantemp", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年meantemp資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice1 == "2015年"){
+      ggplotly(ggplot(a_2015,aes(x = meantemp))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meantemp", y="count",caption="資料來源 : kaggle平台",
+                      title="2015年meantemp資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }else {
+      ggplotly(ggplot(a_2016,aes(x = meantemp))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meantemp", y="count",caption="資料來源 : kaggle平台",
+                      title="2016年meantemp資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }
+  })
+  output$humidity_0 <- renderPlotly({
+    if (input$choice2 == "2013年~2016年") {
+      ggplotly(ggplot(weather,aes(x = humidity))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="humidity", y="count",caption="資料來源 : kaggle平台",
+                      title="2013年~2016年humidity資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice2 == "2013年"){
+      ggplotly(ggplot(a_2013,aes(x = humidity))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="humidity", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年humidity資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice2 == "2014年"){
+      ggplotly(ggplot(a_2014,aes(x = humidity))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="humidity", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年humidity資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice2 == "2015年"){
+      ggplotly(ggplot(a_2015,aes(x = humidity))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="humidity", y="count",caption="資料來源 : kaggle平台",
+                      title="2015年humidity資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }else {
+      ggplotly(ggplot(a_2016,aes(x = humidity))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="humidity", y="count",caption="資料來源 : kaggle平台",
+                      title="2016年humidity資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }
+  })
+  output$wind_speed_0 <- renderPlotly({
+    if (input$choice3 == "2013年~2016年") {
+      ggplotly(ggplot(weather,aes(x = wind_speed))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台",
+                      title="2013年~2016年wind_speed資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice3 == "2013年"){
+      ggplotly(ggplot(a_2013,aes(x = wind_speed))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年wind_speed資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice3 == "2014年"){
+      ggplotly(ggplot(a_2014,aes(x = wind_speed))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年wind_speed資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice3 == "2015年"){
+      ggplotly(ggplot(a_2015,aes(x = wind_speed))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台",
+                      title="2015年wind_speed資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }else {
+      ggplotly(ggplot(a_2016,aes(x = wind_speed))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台",
+                      title="2016年wind_speed資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }
+  })
+  output$meanpressure_0 <- renderPlotly({
+    if (input$choice4 == "2013年~2016年") {
+      ggplotly(ggplot(weather,aes(x = meanpressure))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台",
+                      title="2013年~2016年meanpressure資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice4 == "2013年"){
+      ggplotly(ggplot(a_2013,aes(x = meanpressure))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年meanpressure資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice4 == "2014年"){
+      ggplotly(ggplot(a_2014,aes(x = meanpressure))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年meanpressure資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice4 == "2015年"){
+      ggplotly(ggplot(a_2015,aes(x = meanpressure))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台",
+                      title="2015年meanpressure資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }else {
+      ggplotly(ggplot(a_2016,aes(x = meanpressure))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台",
+                      title="2016年meanpressure資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }
+  })
+  #第二頁
+  output$meantemp_1<-renderPlotly(
+    ggplotly(ggplot(weather,aes(y=meantemp,x=date))+
+               geom_line(alpha = 0.5)+
+               labs(y="meantemp", x="date",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei")))
+  )
+  output$df1<-renderPlot(checkresiduals(fita1))
+  output$for1<-renderPlotly(
+    ggplotly(ggplot(for_1,aes(x = date1,y = for_t1))+  
+               geom_line( alpha = 0.5) +
+               labs(x="time", y="meantemp",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei"))))
+  output$all_meantemp <- renderDataTable(all_meantemp,options = list(scrollX = TRUE))
+  output$download_meantemp <- downloadHandler(
+    filename = function() {"meantemp全年資料表.csv"},
+    content = function(file) {
+      write.csv(all_meantemp, file)}
+  )
+  #第三頁
+  output$humidity_1<-renderPlotly(
+    ggplotly(ggplot(weather,aes(y=humidity,x=date))+
+               geom_line(alpha = 0.5)+
+               labs(y="humidity", x="date",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei")))
+  )
+  output$df2<-renderPlot(checkresiduals(fitb2))
+  output$for2<-renderPlotly(
+    ggplotly(ggplot(for_2,aes(x = date2,y = for_t2))+  
+               geom_line( alpha = 0.5) +
+               labs(x="time", y="humidity",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei"))))
+  output$all_humidity <- renderDataTable(all_humidity,options = list(scrollX = TRUE))
+  output$download_humidity <- downloadHandler(
+    filename = function() {"humidity全年資料表.csv"},
+    content = function(file) {
+      write.csv(all_humidity, file)}
+  )
+  #第四頁
+  output$wind_speed_1<-renderPlotly(
+    ggplotly(ggplot(weather,aes(y=wind_speed,x=date))+
+               geom_line(alpha = 0.5)+
+               labs(y="wind_speed", x="date",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei"))))
+  output$df3<-renderPlot(checkresiduals(fitc1))
+  output$for3<-renderPlotly(
+    ggplotly(ggplot(for_3,aes(x = date3,y = for_t3))+  
+               geom_line( alpha = 0.5) +
+               labs(x="time", y="wind_speed",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei"))))
+  output$all_wind_speed <- renderDataTable(all_wind_speed,options = list(scrollX = TRUE))
+  output$download_wind_speed <- downloadHandler(
+    filename = function() {"wind_speed全年資料表.csv"},
+    content = function(file) {
+      write.csv(all_wind_speed, file)}
+  )
+  
+  #第五頁
+  output$meanpressure_1<-renderPlotly(
+    ggplotly(ggplot(weather,aes(y=meanpressure,x=date))+
+               geom_line(alpha = 0.5)+
+               labs(y="meanpressure", x="date",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei"))))
+  output$df4<-renderPlot(checkresiduals(fitd2))
+  output$for4<-renderPlotly(
+    ggplotly(ggplot(for_4,aes(x = date4,y = for_t4))+  
+               geom_line( alpha = 0.5) +
+               labs(x="time", y="for_3",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei"))))
+  output$all_meanpressure <- renderDataTable(all_meanpressure,options = list(scrollX = TRUE))
+  output$download_meanpressure <- downloadHandler(
+    filename = function() {"meanpressure全年資料表.csv"},
+    content = function(file) {
+      write.csv(all_meanpressure, file)}
+  )
+}
+
+shinyApp(ui = ui, server = server)
