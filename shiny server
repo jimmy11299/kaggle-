@@ -1,0 +1,212 @@
+server<-function(input,output){
+  #第一頁
+  output$meantemp_0 <- renderPlotly({
+    if (input$choice1 == "2013年~2016年") {
+      ggplotly(ggplot(weather,aes(x = meantemp))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meantemp", y="count",caption="資料來源 : kaggle平台",
+                      title="2013年~2016年meantemp資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice1 == "2013年"){
+      ggplotly(ggplot(a_2013,aes(x = meantemp))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meantemp", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年meantemp資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice1 == "2014年"){
+      ggplotly(ggplot(a_2014,aes(x = meantemp))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meantemp", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年meantemp資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice1 == "2015年"){
+      ggplotly(ggplot(a_2015,aes(x = meantemp))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meantemp", y="count",caption="資料來源 : kaggle平台",
+                      title="2015年meantemp資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }else {
+      ggplotly(ggplot(a_2016,aes(x = meantemp))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meantemp", y="count",caption="資料來源 : kaggle平台",
+                      title="2016年meantemp資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }
+  })
+  output$humidity_0 <- renderPlotly({
+    if (input$choice2 == "2013年~2016年") {
+      ggplotly(ggplot(weather,aes(x = humidity))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="humidity", y="count",caption="資料來源 : kaggle平台",
+                      title="2013年~2016年humidity資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice2 == "2013年"){
+      ggplotly(ggplot(a_2013,aes(x = humidity))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="humidity", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年humidity資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice2 == "2014年"){
+      ggplotly(ggplot(a_2014,aes(x = humidity))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="humidity", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年humidity資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice2 == "2015年"){
+      ggplotly(ggplot(a_2015,aes(x = humidity))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="humidity", y="count",caption="資料來源 : kaggle平台",
+                      title="2015年humidity資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }else {
+      ggplotly(ggplot(a_2016,aes(x = humidity))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="humidity", y="count",caption="資料來源 : kaggle平台",
+                      title="2016年humidity資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }
+  })
+  output$wind_speed_0 <- renderPlotly({
+    if (input$choice3 == "2013年~2016年") {
+      ggplotly(ggplot(weather,aes(x = wind_speed))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台",
+                      title="2013年~2016年wind_speed資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice3 == "2013年"){
+      ggplotly(ggplot(a_2013,aes(x = wind_speed))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年wind_speed資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice3 == "2014年"){
+      ggplotly(ggplot(a_2014,aes(x = wind_speed))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年wind_speed資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice3 == "2015年"){
+      ggplotly(ggplot(a_2015,aes(x = wind_speed))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台",
+                      title="2015年wind_speed資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }else {
+      ggplotly(ggplot(a_2016,aes(x = wind_speed))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台",
+                      title="2016年wind_speed資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }
+  })
+  output$meanpressure_0 <- renderPlotly({
+    if (input$choice4 == "2013年~2016年") {
+      ggplotly(ggplot(weather,aes(x = meanpressure))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台",
+                      title="2013年~2016年meanpressure資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice4 == "2013年"){
+      ggplotly(ggplot(a_2013,aes(x = meanpressure))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年meanpressure資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice4 == "2014年"){
+      ggplotly(ggplot(a_2014,aes(x = meanpressure))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台",
+                      title="2014年meanpressure資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    } else if (input$choice4 == "2015年"){
+      ggplotly(ggplot(a_2015,aes(x = meanpressure))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台",
+                      title="2015年meanpressure資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }else {
+      ggplotly(ggplot(a_2016,aes(x = meanpressure))+  
+                 geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+                 labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台",
+                      title="2016年meanpressure資料")+
+                 theme(text=element_text(size=15,  family="wqy-microhei")))
+    }
+  })
+  #第二頁
+  output$meantemp_1<-renderPlotly(
+    ggplotly(ggplot(weather,aes(y=meantemp,x=date))+
+               geom_line(alpha = 0.5)+
+               labs(y="meantemp", x="date",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei")))
+  )
+  output$df1<-renderPlot(checkresiduals(fita1))
+  output$for1<-renderPlotly(
+    ggplotly(ggplot(for_1,aes(x = date1,y = for_t1))+  
+               geom_line( alpha = 0.5) +
+               labs(x="time", y="meantemp",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei"))))
+  output$all_meantemp <- renderDataTable(all_meantemp,options = list(scrollX = TRUE))
+  output$download_meantemp <- downloadHandler(
+    filename = function() {"meantemp全年資料表.csv"},
+    content = function(file) {
+      write.csv(all_meantemp, file)}
+  )
+  #第三頁
+  output$humidity_1<-renderPlotly(
+    ggplotly(ggplot(weather,aes(y=humidity,x=date))+
+               geom_line(alpha = 0.5)+
+               labs(y="humidity", x="date",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei")))
+  )
+  output$df2<-renderPlot(checkresiduals(fitb2))
+  output$for2<-renderPlotly(
+    ggplotly(ggplot(for_2,aes(x = date2,y = for_t2))+  
+               geom_line( alpha = 0.5) +
+               labs(x="time", y="humidity",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei"))))
+  output$all_humidity <- renderDataTable(all_humidity,options = list(scrollX = TRUE))
+  output$download_humidity <- downloadHandler(
+    filename = function() {"humidity全年資料表.csv"},
+    content = function(file) {
+      write.csv(all_humidity, file)}
+  )
+  #第四頁
+  output$wind_speed_1<-renderPlotly(
+    ggplotly(ggplot(weather,aes(y=wind_speed,x=date))+
+               geom_line(alpha = 0.5)+
+               labs(y="wind_speed", x="date",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei"))))
+  output$df3<-renderPlot(checkresiduals(fitc1))
+  output$for3<-renderPlotly(
+    ggplotly(ggplot(for_3,aes(x = date3,y = for_t3))+  
+               geom_line( alpha = 0.5) +
+               labs(x="time", y="wind_speed",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei"))))
+  output$all_wind_speed <- renderDataTable(all_wind_speed,options = list(scrollX = TRUE))
+  output$download_wind_speed <- downloadHandler(
+    filename = function() {"wind_speed全年資料表.csv"},
+    content = function(file) {
+      write.csv(all_wind_speed, file)}
+  )
+  
+  #第五頁
+  output$meanpressure_1<-renderPlotly(
+    ggplotly(ggplot(weather,aes(y=meanpressure,x=date))+
+               geom_line(alpha = 0.5)+
+               labs(y="meanpressure", x="date",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei"))))
+  output$df4<-renderPlot(checkresiduals(fitd2))
+  output$for4<-renderPlotly(
+    ggplotly(ggplot(for_4,aes(x = date4,y = for_t4))+  
+               geom_line( alpha = 0.5) +
+               labs(x="time", y="for_3",caption="資料來源 : kaggle平台")+
+               theme(text=element_text(size=15,  family="wqy-microhei"))))
+  output$all_meanpressure <- renderDataTable(all_meanpressure,options = list(scrollX = TRUE))
+  output$download_meanpressure <- downloadHandler(
+    filename = function() {"meanpressure全年資料表.csv"},
+    content = function(file) {
+      write.csv(all_meanpressure, file)}
+  )
+}
+
+shinyApp(ui = ui, server = server)
