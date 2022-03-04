@@ -1,0 +1,526 @@
+library(readr)
+library(dplyr)
+#[資料來源](https://www.kaggle.com/sumanthvrao/daily-climate-time-series-data)
+#[參考資料](https://medium.com/r-%E8%AA%9E%E8%A8%80%E8%87%AA%E5%AD%B8%E7%B3%BB%E5%88%97/r%E8%AA%9E%E8%A8%80%E8%87%AA%E5%AD%B8%E6%97%A5%E8%A8%98-10-%E6%99%82%E9%96%93%E5%BA%8F%E5%88%97%E9%A0%90%E6%B8%AC%E6%96%B9%E6%B3%95-5aef00a9c997)
+weather <- read_csv("C:/DailyDelhiClimateTrain.csv")
+View(weather)
+weather<-weather[-c(1462),]
+tail(weather)
+#meantemp
+weather[c(1183,1324),]
+weather$meantemp%>%plot()
+
+## Transformed data
+log_meantemp=log(weather$meantemp)
+ts.plot(log_meantemp)
+weather$meantemp%>%mean()
+
+## Differencing data for stationary
+dlog_meantemp=diff(log_meantemp)  # first difference
+ts.plot(dlog_meantemp)
+sdlog_meantemp=diff(dlog_meantemp,lag=12)  #seasonal difference
+ts.plot(sdlog_meantemp)
+
+## Unit root test(希望不具單根)
+#單根代表資料具有隨機趨勢
+#有單根導致的問題:
+#1.有微小的誤差
+#2.可能導致p-value超過5% -> 無法拒絕虛無假設(假設資料是具有單根) -> 檢定無意義
+#3.變數之間不獨立
+library(urca)
+#kpss的虛無假設是有單根，p值>0.05意味沒有證據表明它不是趨勢平穩的
+ura1=ur.kpss(log_meantemp)#沒過
+#df的虛無假設為有單根
+ura2=ur.df(log_meantemp,type="trend")#有過
+#pp的虛無假設為有單根
+ura3=ur.pp(log_meantemp)#有過
+summary(ura1)
+summary(ura2)
+summary(ura3)
+
+## Estimate the number of differences
+library(forecast)
+ndiffs(log_meantemp)   # Number of first difference
+nsdiffs(log_meantemp)  # Number of seasonal difference
+
+## Plot ACF and PACF
+ggAcf(log_meantemp);ggPacf(log_meantemp)
+ggAcf(log_meantemp,lag.max=48);ggPacf(log_meantemp,lag.max=48)
+ggAcf(sdlog_meantemp,lag.max=48);ggPacf(sdlog_meantemp,lag.max=48)
+ggtsdisplay(log_meantemp);ggtsdisplay(dlog_meantemp);ggtsdisplay(sdlog_meantemp)
+
+# Estimate ARIMA model
+#AR模型: ACF:cut off \ PACF:dies down
+#MA模型: ACF:dies down \ PACF:cut off
+#ARMA模型: ACF:dies down \ PACF:dies down
+#ARIMA模型:ARMA模型加入差分項
+#ARIMA (p,d,q)
+#p:過去資料的加權平均，今天的股價會是過去股價的加權平均值
+#可透過AIC或BIC進行判斷(AIC為主)
+#d:差分次數。
+#q:隨機誤差的加權平均，今天的股價之隨機誤差會與過去產生的隨機誤差有關
+#可透過ACF(自相關係數) and PACF(偏自相關係數)進行判斷
+#ACF應該會在q-p期後漸漸消失，而PACF會在p-q期後漸漸消失
+#若要穩定則須q-p或p-q越接近0越好
+#########################################
+#auto.arima()便是已AIC去判斷pdq的參數
+#判斷參數的辦法:
+#先以auto.arima()知道p，
+#然後再根據差分次數判斷d，
+#通常q與p應該要相近(因ACF與PACF越小越好)[表示變數間無自相關]
+fita1=Arima(log_meantemp,order=c(5,1,6))
+summary(fita1)
+
+fita2=auto.arima(log_meantemp)
+summary(fita2)
+
+# Diagnostic Checking
+#虛無假設為雜訊不是隨機產生的(具有自相關)
+#檢視是否有白噪音(雜訊是隨機出現)[不具有自相關]，
+#穩定的資料應該要是隨機出現的
+#根據自動配飾的結果去調整q直到不具自相關(有白噪音)
+checkresiduals(fita1)#有過
+checkresiduals(fita2)#沒過
+
+# Fprecasting
+fora1=forecast(fita1,h=1461)
+summary(fora1)
+autoplot(fora1$fitted)
+head(exp(fora1$fitted),6)
+for1<-exp(fora1$fitted)
+
+#########################################################
+#humidity
+weather$humidity%>%lineplot()
+ggplot(weather)
+## Transformed data
+log_humidity=log(weather$humidity)
+ts.plot(log_humidity)
+
+## Differencing data for stationary
+dlog_humidity=diff(log_humidity)  # first difference
+ts.plot(dlog_humidity)
+sdlog_humidity=diff(dlog_humidity,lag=12)  #seasonal difference
+ts.plot(sdlog_humidity)
+
+## Unit root test
+library(urca)
+urb1=ur.kpss(log_humidity)#沒過
+urb2=ur.df(log_humidity,type="trend")#有過
+urb3=ur.pp(log_humidity)#有過
+summary(urb1)
+summary(urb2)
+summary(urb3)
+
+## Estimate the number of differences
+library(forecast)
+ndiffs(log_humidity)   # Number of first difference
+nsdiffs(log_humidity)  # Number of seasonal difference
+
+## Plot ACF and PACF
+ggAcf(log_humidity);ggPacf(log_humidity)
+ggAcf(log_humidity,lag.max=48);ggPacf(log_humidity,lag.max=48)
+ggAcf(sdlog_humidity,lag.max=48);ggPacf(sdlog_humidity,lag.max=48)
+ggtsdisplay(log_humidity);ggtsdisplay(dlog_humidity);ggtsdisplay(sdlog_humidity)
+
+# Estimate ARIMA model 用(4,0,3)
+fitb1=Arima(log_humidity,order=c(4,0,2))
+summary(fitb1)
+
+fitb2=auto.arima(log_humidity)
+summary(fitb2)
+
+# residual Diagnostic Checking
+checkresiduals(fitb1)#有過
+checkresiduals(fitb2)#有過
+
+# Fprecasting
+forb2=forecast(fitb2,h=1461)
+summary(forb2)
+autoplot(forb2)
+for2<-exp(forb2$fitted)
+length(for2)
+#########################################################
+#wind_speed
+## Transformed data
+log_wind_speed=log(weather$wind_speed)
+ts.plot(log_wind_speed)
+
+which(log_wind_speed=="-Inf")%>%length()
+log_wind_speed<-log_wind_speed[-c(1,16,48,281,289,291,295,309,320,342,
+                                  375,642,643,644,696,697,698,708,952,
+                                  954,957,1049,1057,1099,1102,1462)]
+## Differencing data for stationary
+dlog_wind_speed=diff(log_wind_speed)  # first difference
+ts.plot(dlog_wind_speed)
+sdlog_wind_speed=diff(dlog_wind_speed,lag=12)  #seasonal difference
+ts.plot(sdlog_wind_speed)
+
+## Unit root test(希望不具單根)
+library(urca)
+urc1=ur.kpss(log_wind_speed)#沒過
+urc2=ur.df(log_wind_speed,type="trend")#有過
+urc3=ur.pp(log_wind_speed)#有過
+summary(urc1)
+summary(urc2)
+summary(urc3)
+
+## Estimate the number of differences
+library(forecast)
+ndiffs(log_wind_speed)   # Number of first difference
+nsdiffs(log_wind_speed)  # Number of seasonal difference
+
+## Plot ACF and PACF
+ggAcf(log_wind_speed);ggPacf(log_wind_speed)
+ggAcf(dlog_wind_speed,lag.max=48);ggPacf(dlog_wind_speed,lag.max=48)
+ggAcf(sdlog_wind_speed,lag.max=48);ggPacf(sdlog_wind_speed,lag.max=48)
+ggtsdisplay(log_wind_speed);ggtsdisplay(dlog_wind_speed);ggtsdisplay(sdlog_wind_speed)
+
+# Estimate ARIMA model 用(2,0,3)
+fitc1=Arima(log_wind_speed,order=c(2,0,3))
+summary(fitc1)
+
+fitc2=auto.arima(log_wind_speed)
+summary(fitc2)
+
+# Diagnostic Checking
+checkresiduals(fitc1)
+checkresiduals(fitc2)
+
+# Fprecasting 只預測出1436個預測值
+forc1=forecast(fitc1,h=1461)
+summary(forc1)
+autoplot(forc1)
+for3<-exp(forc1$fitted)
+length(for3)
+tail(forc1)
+#########################################################
+#meanpressure
+which(weather$meanpressure>7000)
+which(weather$meanpressure<0)
+which(meanpressure<800)
+meanpressure<-weather$meanpressure[-c(1183,1324,1309,1321 ,1426)]
+## Transformed data 324
+log_meanpressure=log(meanpressure)
+ts.plot(log_meanpressure)
+plot(meanpressure)
+which(meanpressure<800)
+## Differencing data for stationary
+dlog_meanpressure=diff(log_meanpressure)  # first difference
+ts.plot(dlog_meanpressure)
+sdlog_meanpressure=diff(dlog_meanpressure,lag=12)  #seasonal difference
+ts.plot(sdlog_meanpressure)
+
+## Unit root test
+#log_meanpressure依然有趨勢，雇用一次差分來消除趨勢
+library(urca)
+urd1=ur.kpss(dlog_meanpressure)#有過
+urd2=ur.df(dlog_meanpressure,type="trend")#有過
+urd3=ur.pp(dlog_meanpressure)#有過
+summary(urd1)
+summary(urd2)
+summary(urd3)
+
+## Estimate the number of differences
+library(forecast)
+ndiffs(dlog_meanpressure)   # Number of first difference
+nsdiffs(dlog_meanpressure)  # Number of seasonal difference
+
+## Plot ACF and PACF
+ggAcf(log_meanpressure);ggPacf(log_meanpressure)
+ggAcf(dlog_meanpressure,lag.max=48);ggPacf(dlog_meanpressure,lag.max=48)
+ggAcf(sdlog_meanpressure,lag.max=48);ggPacf(sdlog_meanpressure,lag.max=48)
+ggtsdisplay(log_meanpressure);ggtsdisplay(dlog_meanpressure);ggtsdisplay(sdlog_meanpressure)
+
+# Estimate ARIMA model 用(5,0,0)
+fitd1=Arima(dlog_meanpressure,order=c(5,0,3))
+summary(fitd1)
+
+fitd2=auto.arima(dlog_meanpressure)
+summary(fitd2)
+
+# Diagnostic Checking
+checkresiduals(fitd1)
+checkresiduals(fitd2)
+
+# Fprecasting 只預測出1458個預測值
+ford2=forecast(fitd2,h =1461)
+summary(ford2)
+autoplot(ford2)
+for4<-exp(ford2$fitted)
+
+###########################################################
+#準備資料
+library(plotly)
+a_2013<-weather[1:365,] 
+a_2014<-weather[366:730,]
+a_2015<-weather[731:1095,]
+a_2016<-weather[1096:1461,]
+a_2016<-a_2016[-c(88),]
+###########################################################
+#各變數全年度表格
+#meantemp
+meantemp_2013<-weather[1:365,]$meantemp
+meantemp_2014<-weather[366:730,]$meantemp
+meantemp_2015<-weather[731:1095,]$meantemp
+meantemp_2016<-weather[1096:1461,]$meantemp
+all_meantemp0<-cbind(meantemp_2013,meantemp_2014)
+all_meantemp1<-cbind(all_meantemp0,meantemp_2015)
+all_meantemp<-cbind(all_meantemp1,meantemp_2016)
+View(all_meantemp)
+#humidity
+humidity_2013<-weather[1:365,]$humidity
+humidity_2014<-weather[366:730,]$humidity
+humidity_2015<-weather[731:1095,]$humidity
+humidity_2016<-weather[1096:1461,]$humidity
+all_humidity0<-cbind(humidity_2013,humidity_2014)
+all_humidity1<-cbind(all_humidity0,humidity_2015)
+all_humidity<-cbind(all_humidity1,humidity_2016)
+View(all_humidity)
+#wind_speed
+wind_speed_2013<-weather[1:365,]$wind_speed
+wind_speed_2014<-weather[366:730,]$wind_speed
+wind_speed_2015<-weather[731:1095,]$wind_speed
+wind_speed_2016<-weather[1096:1461,]$wind_speed
+all_wind_speed0<-cbind(wind_speed_2013,wind_speed_2014)
+all_wind_speed1<-cbind(all_wind_speed0,wind_speed_2015)
+all_wind_speed<-cbind(all_wind_speed1,wind_speed_2016)
+View(all_wind_speed)
+#meanpressure
+meanpressure_2013<-weather[1:365,]$meanpressure
+meanpressure_2014<-weather[366:730,]$meanpressure
+meanpressure_2015<-weather[731:1095,]$meanpressure
+meanpressure_2016<-weather[1096:1461,]$meanpressure
+all_meanpressure0<-cbind(meanpressure_2013,meanpressure_2014)
+all_meanpressure1<-cbind(all_meanpressure0,meanpressure_2015)
+all_meanpressure<-cbind(all_meanpressure1,meanpressure_2016)
+View(all_meanpressure)
+
+#第一頁
+#各類別的月資料(2013)
+ggplotly(ggplot(a_2013,aes(x = meantemp))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="meantemp", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+ggplotly(ggplot(a_2013,aes(x = humidity))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="humidity", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+ggplotly(ggplot(a_2013,aes(x = wind_speed))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+ggplotly(ggplot(a_2013,aes(x = meanpressure))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+#########################################################
+#各類別的月資料(2014)
+ggplotly(ggplot(a_2014,aes(x = meantemp))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="meantemp", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+ggplotly(ggplot(a_2014,aes(x = humidity))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="humidity", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+ggplotly(ggplot(a_2014,aes(x = wind_speed))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+ggplotly(ggplot(a_2014,aes(x = meanpressure))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+#########################################################
+#各類別的月資料(2015)
+ggplotly(ggplot(a_2015,aes(x = meantemp))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="meantemp", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+ggplotly(ggplot(a_2015,aes(x = humidity))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="humidity", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+ggplotly(ggplot(a_2015,aes(x = wind_speed))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+ggplotly(ggplot(a_2015,aes(x = meanpressure))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+#########################################################
+#各類別的月資料(2016)
+ggplotly(ggplot(a_2013,aes(x = meantemp))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="meantemp", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+ggplotly(ggplot(a_2016,aes(x = humidity))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="humidity", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+ggplotly(ggplot(a_2016,aes(x = wind_speed))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="wind_speed", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+ggplotly(ggplot(a_2016,aes(x = meanpressure))+  
+           geom_histogram(color="black", fill="blue",bins = 30, alpha = 0.5) +
+           labs(x="meanpressure", y="count",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+#########################################################
+#meantemp
+#原始時間序列線圖
+ggplotly(ggplot(weather,aes(y=meantemp,x=date))+
+           geom_line(alpha = 0.5)+
+           labs(y="meantemp", x="date",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+#原始時間序列點圖
+ggplotly(ggplot(weather,aes(y=meantemp,x=date))+
+           geom_point(bins = 30, alpha = 0.5)+
+           labs(x="meantemp", y="date",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+#單根檢定
+library(urca)
+ura1=ur.kpss(log_meantemp)#沒過
+ura2=ur.df(log_meantemp,type="trend")#有過
+ura3=ur.pp(log_meantemp)#有過
+summary(ura1);summary(ura2);summary(ura3)
+summary(ura2@testreg)
+ura2@testreg
+#白噪音檢定
+checkresiduals(fita1)#有過
+
+#預測值
+for1<-exp(fora1$fitted)
+autoplot(for1)
+
+for_t1<-ts(for1,frequency = 1,start = as.Date("2017-01-01"))
+a1<-as.Date("2017-01-01")
+date1<-seq(from= a1,by=1,length.out = 1461)
+for_1<-data.frame(date1,for_t1)
+ggplotly(ggplot(for_1,aes(x = date1,y = for_t1))+  
+           geom_line( alpha = 0.5) +
+           labs(x="time", y="for_1",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+#################################################################
+#humidity
+#原始時間序列線圖
+ggplotly(ggplot(weather,aes(y=humidity,x=date))+
+           geom_line(alpha = 0.5)+
+           labs(y="humidity", x="date",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+#原始時間序列點圖
+ggplotly(ggplot(weather,aes(y=humidity,x=date))+
+           geom_point(bins = 30, alpha = 0.5)+
+           labs(x="humidity", y="date",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+#單根檢定
+library(urca)
+urb1=ur.kpss(log_humidity)#沒過
+urb2=ur.df(log_humidity,type="trend")#有過
+urb3=ur.pp(log_humidity)#有過
+summary(urb1);summary(urb2);summary(urb3)
+
+#白噪音檢定
+checkresiduals(fitb2)#有過
+
+#預測值
+for2<-exp(forb2$fitted)
+
+for_t2<-ts(for2,frequency = 1,start = as.Date("2017-01-01"))
+a2<-as.Date("2017-01-01")
+date2<-seq(from= a2,by=1,length.out = 1461)
+for_2<-data.frame(date2,for_t2)
+
+ggplotly(ggplot(for_2,aes(x = date2,y = for_t2))+  
+           geom_line( alpha = 0.5) +
+           labs(x="time", y="for_1",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+#################################################################
+#wind_speed
+#原始時間序列線圖
+ggplotly(ggplot(weather,aes(y=wind_speed,x=date))+
+           geom_line(alpha = 0.5)+
+           labs(y="wind_speed", x="date",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+#原始時間序列點圖
+ggplotly(ggplot(weather,aes(y=wind_speed,x=date))+
+           geom_point(bins = 30, alpha = 0.5)+
+           labs(x="wind_speed", y="date",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+
+#單根檢定
+library(urca)
+urc1=ur.kpss(log_wind_speed)#沒過
+urc2=ur.df(log_wind_speed,type="trend")#有過
+urc3=ur.pp(log_wind_speed)#有過
+summary(urc1);summary(urc2);summary(urc3)
+
+#白噪音檢定
+checkresiduals(fitc1)#有過
+
+#預測值
+for3<-exp(forc1$fitted)
+
+for_t3<-ts(for3,frequency = 1,start = as.Date("2017-01-01"))
+a3<-as.Date("2017-01-01")
+date3<-seq(from= a3,by=1,length.out = 1436)
+for_3<-data.frame(date3,for_t3)
+
+ggplotly(ggplot(for_3,aes(x = date3,y = for_t3))+  
+           geom_line( alpha = 0.5) +
+           labs(x="time", y="for_3",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+#################################################################
+#meanpressure
+#原始時間序列線圖
+ggplotly(ggplot(weather,aes(y=meanpressure,x=date))+
+           geom_line(alpha = 0.5)+
+           labs(y="meanpressure", x="date",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+#原始時間序列點圖
+ggplotly(ggplot(weather,aes(y=meanpressure,x=date))+
+           geom_point(bins = 30, alpha = 0.5)+
+           labs(x="meanpressure", y="date",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
+View(weather[5])
+#單根檢定
+library(urca)
+urd1=ur.kpss(dlog_meanpressure)#有過
+urd2=ur.df(dlog_meanpressure,type="trend")#有過
+urd3=ur.pp(dlog_meanpressure)#有過
+summary(urd1);summary(urd2);summary(urd3)
+
+#白噪音檢定
+checkresiduals(fitd2)#有過
+
+#預測值
+for4<-exp(ford2$fitted)
+
+for_t4<-ts(for4,frequency = 1,start = as.Date("2017-01-01"))
+a4<-as.Date("2017-01-01")
+date4<-seq(from= a4,by=1,length.out = 1458)
+for_4<-data.frame(date4,for_t4)
+
+ggplotly(ggplot(for_4,aes(x = date4,y = for_t4))+  
+           geom_line( alpha = 0.5) +
+           labs(x="time", y="for_3",caption="資料來源 : kaggle平台")+
+           theme(text=element_text(size=15,  family="wqy-microhei")))
